@@ -2,7 +2,7 @@
 <game debug="false">
     <welcome>
         Cloak of Darkness
-        A basic X-TADS demonstration.
+        A basic TagForge demonstration.
     </welcome> 
 	
     <auxiliaryMessages>  
@@ -10,9 +10,33 @@
         <auxiliaryMessage type="BELONGS" tag="plural" single=":1 doesn't belong in :2." plural=":1 don't belong n :2."/>            
     </auxiliaryMessages>
 	
-    <player inventory="3" startRoom="1" timeout="5" skiptime="10" hp="100" onDeathEvent="500000" quitGameNpc="99999">
+    <player 
+		inventory="-101|3" 
+		startRoom="1" 
+		timeout="5" 
+		skiptime="10" 
+		hp="100" 
+		onDeathEvent="500000" 
+		quitGameNpc="99999"
+		itemTags="male"
+		meTags="player">
         As good looking as ever.
     </player>
+	
+    <genders default="male">
+        <gender tag="male" pronoun="he" object="him"
+                possessive="his" possessivePronoun="his"
+                pluralise="single"/>
+        <gender tag="female" pronoun="she" object="her"
+                possessive="her" possessivePronoun="hers"
+                pluralise="single"/>
+        <gender tag="they" pronoun="they" object="them"
+                possessive="their" possessivePronoun="theirs"
+                pluralise="plural"/>
+        <gender tag="it" pronoun="it" object="it"
+                possessive="its" possessivePronoun="theirs"
+                pluralise="single"/>
+    </genders>
     
     <currency major="Dollars" minor="Cents" symbol="$" initialBalance="0"/>
     <gameClock type="12" startTime="1:00pm"/>
@@ -77,12 +101,13 @@
         <rule name="CheckTargetObjectAcceptsItems" implementation="TargetObjectAcceptsItemsRule"/>
         <rule name="CheckTargetObjectIsLocal" implementation="TargetObjectIsLocalRule"/>
         <rule name="CheckTargetIsInFriendRoom" implementation="TargetObjectIsInFriendRoomRule"/>
+		<rule name="CheckNoMatchForTag" implementation="NoMatchForTagRule"/>
         <rule name="NoMatch" implementation="NoMatchRule"/>
     </handlerSelectionRules>
     
     <ignoredWords>GO|THE|A|AN|SOME|OF|YOUR|ONE|TWO|FEW| | </ignoredWords>
     <pronouns>IT</pronouns>
-    <again>AGAIN|A</again>
+    <again>A|AGAIN|REDO</again>
     <me>ME|MYSELF|SELF</me>
     
     <verbs defaultPackage="org.happysoft.games.action.handler">
@@ -91,8 +116,18 @@
                 LOOK; redescribe the current location
                 LOOK UP [adjective] &lt;noun&gt; IN [adjective] &lt;noun&gt;; look something up in an index for example
             </help>
-            <adverbs defaultHandler="LookHandler">
+            <adverbs defaultHandler="LookHandler">			
                 <adverb adverbs="UP" handler="DoTaskHandler"/>
+				<adverb adverbs="AT|THROUGH" handler="ExamineHandler" itemTag="viewer">
+                    <rules>
+                        <!-- LOOK AT x THROUGH y, LOOK THROUGH y AT x --> 
+                        <rule name="CheckTargetObjectIsNull" override="ExamineHandler"/>
+                        <rule name="CheckNoMatchForTag" override="ExamineHandler"/>
+                        <rule name="CheckTargetIsInFriendRoom" override="ItemActionListener" itemTag="viewable"/>
+                        <rule name="CheckTargetObjectIsLocal" override="ItemActionListener" itemTag="magnifiable"/>
+                        <rule name="NoMatch" override="DefaultHandler">You don't need :1 to do that.</rule>
+                    </rules>
+                </adverb>
             </adverbs>
         </verb>
         <verb synonyms="ATTACK|KILL" handler="AttackHandler" acceptedPrepositions="WITH">
@@ -137,6 +172,7 @@
                     <rules>
                         <!-- like WEAR x -->
                         <rule name="CheckTargetObjectIsNull" override="ItemActionListener" itemTag="wearable"/>
+						<rule name="CheckNoMatchForTag" override="DefaultHandler">You can't wear that!</rule>
                     </rules>
                 </adverb>
                 <adverb adverbs="IN|INTO">
